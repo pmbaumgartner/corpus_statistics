@@ -3,12 +3,15 @@ name = "corpus-statistics"
 version = "0.1.0"
 description = ""
 authors = ["Peter Baumgartner <5107405+pmbaumgartner@users.noreply.github.com>"]
+readme = "README.md"
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
 spacy = "^3.2.2"
-zarr = "^2.11.0"
 scipy = "^1.8.0"
+tqdm = "^4.62.3"
+numpy = "^1.22.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -17,6 +20,11 @@ flake8 = "^4.0.1"
 mypy = "^0.931"
 ipython = "^8.0.1"
 datasets = "^1.18.3"
+pytest-sugar = "^0.9.4"
+pandas = "^1.4.1"
+py-spy = "^0.3.11"
+isort = "^5.10.1"
+pytest-cov = "^3.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
