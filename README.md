@@ -2,7 +2,7 @@
 
 If you want to know what tokens your pipeline has seen, this is the component for you.
 
-**Example**
+⚡️ **Example**
 
 ```python
 from spacy.lang.en import English
@@ -58,11 +58,12 @@ print(*corpus_stats.vocabulary.most_common(5), sep="\n")
 
 mean_doc_length = sum(corpus_stats.doc_lengths) / corpus_stats.corpus_length
 print(f"Mean doc length: {mean_doc_length:.1f}")
+# Mean doc length: 272.5
 ```
 
-**Use it when you train your models to keep track of what's was in your training data**
+# Use in Model Training and Config Files
 
-Example config:
+This can be quite helpful if you wanted to know what tokens were seen in your training data. You can include this component in your training config as follows.
 
 ```conf
 ...
@@ -75,9 +76,10 @@ pipeline = ["simple_corpus_stats", ...]
 
 [components.simple_corpus_stats]
 factory = "simple_corpus_stats"
+n_train = 1000  # This is important! See below
 ```
 
-If you use it in a training config, your pipeline will likely see the same docs multiple times and in different order, due to the number of training epochs and batch size, so the vocab counter will be off. To correct for this, you can use the `rectify()`, e.g.
+⚠️ 🔁 If you use this component in a training config, your pipeline will see the same docs multiple times, due to the number of training epochs and evaluation steps, so the vocab counter will be incorrect. To correct for this, you need to specify the number of examples in your training dataset as the `n_train` config parameter. 
 
 ```python
 import spacy
@@ -85,12 +87,10 @@ import spacy
 nlp = spacy.load("your_trained_model")
 corpus_stats = nlp.get_pipe("simple_corpus_stats")
 
-# There should be at least one word seen only once, but the
-# min value is > 1 because we saw each doc several times
-if min(corpus_stats.vocabulary.values()) == 1:
-    corpus_stats.rectify()
-
 assert min(corpus_stats.vocabulary.values()) == 1
 
+# value from config
+assert len(corpus_stats.doc_lengths) == 1000
+```
 
 

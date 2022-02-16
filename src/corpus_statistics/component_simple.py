@@ -1,50 +1,37 @@
-import hashlib
 from collections import Counter
-from functools import cached_property, lru_cache
+from functools import cached_property
 from pathlib import Path
-from typing import FrozenSet, List
+from typing import FrozenSet, List, Optional
 
 import srsly
 from spacy.language import Language
 from spacy.tokens import Doc
 
 
-@lru_cache
-def _hash_cache(text: str) -> str:
-    return hashlib.md5(text.encode("utf8")).hexdigest()
-
-
-@Language.factory("simple_corpus_stats")
-def create_simple_corpus_stats_component(nlp: Language, name: str):
-    return SimpleCorpusStatistics(nlp)
+@Language.factory("simple_corpus_stats", default_config={"n_train": None})
+def create_simple_corpus_stats_component(
+    nlp: Language, name: str, n_train: Optional[int]
+):
+    return SimpleCorpusStatistics(nlp, n_train=n_train)
 
 
 class SimpleCorpusStatistics:
-    def __init__(self, nlp: Language):
+    def __init__(self, nlp: Language, n_train: Optional[int]):
         self.vocabulary: Counter = Counter()
         self.doc_lengths: List[int] = []
-        self.is_rectified: bool = False
+        self.n_train = n_train
 
+        self._known_length = n_train is not None
         self._call_count: int = 0
-        self._doc_hash_counter: Counter = Counter()
-        self._seen_full_dup: bool = False
-        self._inferred_corpus_length: int = 0
 
     def __call__(self, doc: Doc) -> Doc:
-        self._call_count += 1
+        if self._known_length and self._call_count >= self.n_train:
+            return doc
+
         tokens = [token.text for token in doc]
         self.vocabulary.update(tokens)
         self.doc_lengths.append(len(tokens))
-
-        if not self._seen_full_dup:
-            doc_hash = _hash_cache(doc.text)
-            self._doc_hash_counter.update([doc_hash])
-        if not self._seen_full_dup and min(self._doc_hash_counter.values()) == 2:
-            # When we've seen every document twice, it means we've iterated through
-            # the corpus 2x, so we can infer the length at calls / 2
-            self._seen_full_dup = True
-            self._inferred_corpus_length = self._call_count // 2
-            self._doc_hash_counter = Counter()
+        self._call_count += 1
         return doc
 
     def __getitem__(self, key: str) -> int:
@@ -55,22 +42,6 @@ class SimpleCorpusStatistics:
 
     def __len__(self) -> int:
         return len(self.vocabulary)
-
-    def rectify(self):
-        if not self._seen_full_dup:
-            raise ValueError(
-                "Rectification not necessary."
-                " The component hasn't been called on a corpus repeatedly."
-            )
-        if self.is_rectified:
-            raise ValueError("Vocab already rectified.")
-
-        n_repeats: int = self._call_count / self._inferred_corpus_length
-        self.vocabulary = Counter(
-            {k: v // n_repeats for k, v in self.vocabulary.items()}
-        )
-        self.doc_lengths = self.doc_lengths[: self._inferred_corpus_length]
-        self.is_rectified = True
 
     @cached_property
     def vocab_size(self) -> int:
@@ -110,10 +81,8 @@ class SimpleCorpusStatistics:
         srsly.write_json(
             path / "vocabulary-meta.json",
             dict(
-                is_inferred=self.is_rectified,
+                n_train=self.n_train,
                 _call_count=self._call_count,
-                _full_duplicates=self._seen_full_dup,
-                _inferred_corpus_length=self._inferred_corpus_length,
             ),
         )
 
@@ -121,8 +90,6 @@ class SimpleCorpusStatistics:
         self.vocabulary = Counter(srsly.read_msgpack(path / "vocabulary.msgpack"))
         self.doc_lengths = srsly.read_msgpack(path / "doc_lengths.msgpack")
         meta = srsly.read_json(path / "vocabulary-meta.json")
-        self.is_rectified = meta["is_inferred"]
+        self.n_train = meta["n_train"]
         self._call_count = meta["_call_count"]
-        self._seen_full_dup = meta["_full_duplicates"]
-        self._inferred_corpus_length = meta["_inferred_corpus_length"]
         return self

@@ -116,25 +116,14 @@ def pipeline_with_test_docs_iter_2x(test_docs, pipeline):
     return pipeline, corpus_statistics
 
 
-def test_rectify(test_docs, pipeline_with_component, pipeline_with_test_docs_iter_2x):
-    pipeline, corpus_statistics = pipeline_with_component
-    pipeline_2x, corpus_statistics_2x = pipeline_with_test_docs_iter_2x
-    assert corpus_statistics_2x._inferred_corpus_length == len(test_docs)
-    # this is asserting the "wrong" vocab count
-    assert min(corpus_statistics_2x.vocabulary.values()) > 1
-    corpus_statistics_2x.rectify()
-    assert corpus_statistics_2x.vocabulary == corpus_statistics.vocabulary
-    assert min(corpus_statistics_2x.vocabulary.values()) == 1
-
-
-def test_infer_error_not_duplicated(pipeline_with_component):
-    pipeline, corpus_statistics = pipeline_with_component
-    with pytest.raises(ValueError):
-        corpus_statistics.rectify()
-
-
-def test_infer_error_already_rectified(pipeline_with_test_docs_iter_2x):
-    pipeline_2x, corpus_statistics_2x = pipeline_with_test_docs_iter_2x
-    corpus_statistics_2x.rectify()
-    with pytest.raises(ValueError):
-        corpus_statistics_2x.rectify()
+def test_n_train(test_docs):
+    nlp = spacy.blank("en")
+    nlp.add_pipe("simple_corpus_stats", config={"n_train": 5})
+    for _ in range(5):  # repeat 5 times to emulate multiple passes
+        for doc in nlp.pipe(test_docs):
+            pass
+    corpus_statistics = nlp.get_pipe("simple_corpus_stats")
+    assert len(corpus_statistics.doc_lengths) == 5
+    assert corpus_statistics.doc_lengths == [9, 10, 10, 10, 11]
+    # If nothing occurs only once, it means a single term is repeated
+    assert min(corpus_statistics.vocabulary.values()) == 1
