@@ -1,6 +1,10 @@
-# Corpus Statistics: - A Very Basic (for now) spaCy Pipeline Component
+# Corpus Statistics: A Very Basic (for now) spaCy Pipeline Component
 
 If you want to know what tokens your pipeline has seen, this is the component for you.
+
+```bash
+pip install git+https://github.com/pmbaumgartner/corpus_statistics
+```
 
 ⚡️ **Example**
 
@@ -65,7 +69,7 @@ print(f"Mean doc length: {mean_doc_length:.1f}")
 
 This can be quite helpful if you wanted to know what tokens were seen in your training data. You can include this component in your training config as follows.
 
-```conf
+```
 ...
 [nlp]
 lang = "en"
