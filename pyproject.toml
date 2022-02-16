@@ -29,3 +29,6 @@ pytest-cov = "^3.0.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."spacy_factories"]
+"simple_corpus_stats" = "corpus_statistics.component_simple:create_simple_corpus_stats_component"

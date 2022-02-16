@@ -1,3 +1,3 @@
-from .component import create_corpus_statistics_component
+from .component_simple import create_simple_corpus_stats_component
 
 __version__ = "0.1.0"
