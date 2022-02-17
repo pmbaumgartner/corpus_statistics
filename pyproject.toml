@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "corpus-statistics"
-version = "0.1.0"
+version = "0.1.1"
 description = "A spaCy pipeline component for counting tokens a pipeline has seen."
 authors = ["Peter Baumgartner <5107405+pmbaumgartner@users.noreply.github.com>"]
 readme = "README.md"
