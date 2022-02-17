@@ -1,8 +1,10 @@
 # Corpus Statistics: A Very Basic (for now) spaCy Pipeline Component
 
-If you want to know what tokens your pipeline has seen, this is the component for you.
+If you want to know what tokens your spaCy pipeline has seen, this is the component for you.
 
 ```bash
+pip install corpus-statistics
+# OR for latest
 pip install git+https://github.com/pmbaumgartner/corpus_statistics
 ```
 
@@ -16,10 +18,10 @@ from datasets import load_dataset
 dataset = load_dataset("imdb")
 texts = dataset["train"]["text"]
 
-# ✨ start the magic 
 nlp = English()  # or spacy.load('a_model')
-nlp.add_pipe("simple_corpus_stats")
+nlp.add_pipe("simple_corpus_stats")  
 
+# ✨ start the magic 
 for doc in nlp.pipe(texts):
     # ➡️ do your pipeline stuff! ➡️
     pass
